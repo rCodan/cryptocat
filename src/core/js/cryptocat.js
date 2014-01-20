@@ -52,7 +52,6 @@ var conversations = {}
 var buddyList = []
 var newMessages = 0
 var isFocused = true
-var paused = false
 
 // Load favicon notification settings.
 Tinycon.setOptions({
@@ -991,8 +990,6 @@ $('#userInputText').keydown(function(e) {
 	else if (e.keyCode === 13) {
 		e.preventDefault()
 		$('#userInput').submit()
-		window.clearTimeout(paused)
-		paused = false
 		return true
 	}
 	var destination, type
@@ -1004,20 +1001,6 @@ $('#userInputText').keydown(function(e) {
 		destination = Cryptocat.currentConversation
 		type = 'chat'
 	}
-	if (paused === false) {
-		Cryptocat.xmpp.connection.muc.message(
-			Cryptocat.conversationName + '@' + Cryptocat.xmpp.conferenceServer,
-			destination, '', null, type, 'composing'
-		)
-	}
-	window.clearTimeout(paused)
-	paused = window.setTimeout(function(d, t) {
-		Cryptocat.xmpp.connection.muc.message(
-			Cryptocat.conversationName + '@' + Cryptocat.xmpp.conferenceServer,
-			d, '', null, t, 'paused'
-		)
-		paused = false
-	}, 5000, destination, type)
 })
 
 $('#userInputText').keyup(function(e) {
