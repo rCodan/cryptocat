@@ -948,7 +948,9 @@ $('#userInput').submit(function() {
 		var missingRecipients = []
 		for (var i = 0; i !== buddyList.length; i++) {
 			if (typeof(ciphertext['text'][buddyList[i]]) !== 'object') {
-				missingRecipients.push(buddyList[i])
+				if (Cryptocat.ignoredUsers.indexOf(buddyList[i]) < 0) {
+					missingRecipients.push(buddyList[i])
+				}
 			}
 		}
 		if (missingRecipients.length) {
