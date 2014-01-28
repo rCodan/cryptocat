@@ -112,13 +112,13 @@ Cryptocat.addToConversation = function(message, nickname, conversation, type) {
 	if (nickname === Cryptocat.myNickname) { lineDecoration = 1 }
 	if (type === 'file') {
 		if (!message.length) { return false }
-		message = Mustache.render(Cryptocat.templates.file, { message: message })
 		if (nickname !== Cryptocat.myNickname) {
 			if (Cryptocat.audioNotifications) { Cryptocat.sounds.msgGet.play() }
 			desktopNotification(
-				'img/keygen.gif', nickname + ' @ ' + Cryptocat.conversationName, '', 0x1337
+				'img/keygen.gif', nickname + ' @ ' + Cryptocat.conversationName, message, 0x1337
 			)
 		}
+		message = Mustache.render(Cryptocat.templates.file, { message: message })
 	}
 	else if (type === 'composing') {
 		if ($('#composing-' + nickname).length) { return true }
@@ -126,27 +126,27 @@ Cryptocat.addToConversation = function(message, nickname, conversation, type) {
 	}
 	else if (type === 'message') {
 		if (!message.length) { return false }
+		if (nickname !== Cryptocat.myNickname) {
+			if (Cryptocat.audioNotifications) { Cryptocat.sounds.msgGet.play() }
+			desktopNotification(
+				'img/keygen.gif', nickname + ' @ ' + Cryptocat.conversationName, message, 0x1337
+			)
+		}
 		message = Strophe.xmlescape(message)
 		message = addLinks(message)
 		message = addEmoticons(message)
 		if (message.match(Cryptocat.myNickname)) { lineDecoration = 3 }
-		if (nickname !== Cryptocat.myNickname) {
-			if (Cryptocat.audioNotifications) { Cryptocat.sounds.msgGet.play() }
-			desktopNotification(
-				'img/keygen.gif', nickname + ' @ ' + Cryptocat.conversationName, '', 0x1337
-			)
-		}
 	}
 	else if (type === 'warning') {
 		if (!message.length) { return false }
-		message = Strophe.xmlescape(message)
-		lineDecoration = 4
 		if (nickname !== Cryptocat.myNickname) {
 			if (Cryptocat.audioNotifications) { Cryptocat.sounds.msgGet.play() }
 			desktopNotification(
-				'img/keygen.gif', nickname + ' @ ' + Cryptocat.conversationName, '', 0x1337
+				'img/keygen.gif', nickname + ' @ ' + Cryptocat.conversationName, message, 0x1337
 			)
 		}
+		message = Strophe.xmlescape(message)
+		lineDecoration = 4
 	}
 	else if (type === 'missingRecipients') {
 		if (!message.length) { return false }
@@ -844,7 +844,6 @@ $('#status').click(function() {
 	var $this = $(this)
 	if ($this.attr('src') === 'img/available.png') {
 		$this.attr('src', 'img/away.png')
-		$this.attr('alt', Cryptocat.locale['chatWindow']['statusAway'])
 		$this.attr('title', Cryptocat.locale['chatWindow']['statusAway'])
 		$this.attr('data-utip', Cryptocat.locale['chatWindow']['statusAway'])
 		$this.mouseenter()
@@ -853,7 +852,6 @@ $('#status').click(function() {
 	}
 	else {
 		$this.attr('src', 'img/available.png')
-		$this.attr('alt', Cryptocat.locale['chatWindow']['statusAvailable'])
 		$this.attr('title', Cryptocat.locale['chatWindow']['statusAvailable'])
 		$this.attr('data-utip', Cryptocat.locale['chatWindow']['statusAvailable'])
 		$this.mouseenter()
@@ -877,7 +875,6 @@ else {
 		var $this = $(this)
 		if ($this.attr('src') === 'img/noNotifications.png') {
 			$this.attr('src', 'img/notifications.png')
-			$this.attr('alt', Cryptocat.locale['chatWindow']['desktopNotificationsOn'])
 			$this.attr('title', Cryptocat.locale['chatWindow']['desktopNotificationsOn'])
 			$this.attr('data-utip', Cryptocat.locale['chatWindow']['desktopNotificationsOn'])
 			$this.mouseenter()
@@ -891,7 +888,6 @@ else {
 		}
 		else {
 			$this.attr('src', 'img/noNotifications.png')
-			$this.attr('alt', Cryptocat.locale['chatWindow']['desktopNotificationsOff'])
 			$this.attr('title', Cryptocat.locale['chatWindow']['desktopNotificationsOff'])
 			$this.attr('data-utip', Cryptocat.locale['chatWindow']['desktopNotificationsOff'])
 			$this.mouseenter()
@@ -906,7 +902,6 @@ $('#audio').click(function() {
 	var $this = $(this)
 	if ($this.attr('src') === 'img/noSound.png') {
 		$this.attr('src', 'img/sound.png')
-		$this.attr('alt', Cryptocat.locale['chatWindow']['audioNotificationsOn'])
 		$this.attr('title', Cryptocat.locale['chatWindow']['audioNotificationsOn'])
 		$this.attr('data-utip', Cryptocat.locale['chatWindow']['audioNotificationsOn'])
 		$this.mouseenter()
@@ -915,7 +910,6 @@ $('#audio').click(function() {
 	}
 	else {
 		$this.attr('src', 'img/noSound.png')
-		$this.attr('alt', Cryptocat.locale['chatWindow']['audioNotificationsOff'])
 		$this.attr('title', Cryptocat.locale['chatWindow']['audioNotificationsOff'])
 		$this.attr('data-utip', Cryptocat.locale['chatWindow']['audioNotificationsOff'])
 		$this.mouseenter()
@@ -939,8 +933,7 @@ $('#userInput').submit(function() {
 	if (Cryptocat.currentConversation !== 'main-Conversation') {
 		Cryptocat.otr.keys[Cryptocat.currentConversation].sendMsg(message)
 	}
-	else {
-		if (multiParty.userCount() < 1) { return false }
+	else if (multiParty.userCount() > 1) {
 		var ciphertext = JSON.parse(multiParty.sendMessage(message))
 		var missingRecipients = []
 		for (var i = 0; i !== buddyList.length; i++) {
